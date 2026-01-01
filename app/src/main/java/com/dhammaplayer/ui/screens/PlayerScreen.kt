@@ -13,12 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,9 +38,7 @@ import com.dhammaplayer.data.model.AudioTrack
 import com.dhammaplayer.ui.components.PlaybackControlsBar
 import com.dhammaplayer.ui.theme.Indigo100
 import com.dhammaplayer.ui.theme.Indigo400
-import com.dhammaplayer.ui.theme.Indigo600
 import com.dhammaplayer.ui.theme.Slate500
-import com.dhammaplayer.ui.theme.Slate800
 import kotlinx.coroutines.delay
 
 @Composable
@@ -118,31 +115,11 @@ fun PlayerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.AutoAwesome,
+                    imageVector = Icons.Default.LibraryMusic,
                     contentDescription = null,
                     tint = Indigo400,
                     modifier = Modifier.size(100.dp)
                 )
-
-                // Playing indicator
-                if (isPlaying) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        repeat(4) { index ->
-                            Box(
-                                modifier = Modifier
-                                    .width(4.dp)
-                                    .height((12 + (index * 4)).dp)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .background(Indigo600)
-                            )
-                        }
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -152,7 +129,7 @@ fun PlayerScreen(
                 text = track.title,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = Slate800,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
