@@ -63,7 +63,6 @@ import com.dhammaplayer.ui.theme.Slate300
 import com.dhammaplayer.ui.theme.Slate400
 import com.dhammaplayer.ui.theme.Slate50
 import com.dhammaplayer.ui.theme.Slate500
-import com.dhammaplayer.ui.theme.Slate800
 import java.util.Locale
 
 @Composable
@@ -94,12 +93,12 @@ fun ScheduleScreen(
                         text = "Schedules",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Slate800
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Auto-play latest unplayed talk",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Slate500
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -193,7 +192,7 @@ fun ScheduleScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Amber50
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -203,7 +202,7 @@ fun ScheduleScreen(
                     Text(
                         text = "Note: Scheduled playback will start the first unfinished talk at the scheduled time. Make sure your device is not in Do Not Disturb mode.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Amber800
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
             }
