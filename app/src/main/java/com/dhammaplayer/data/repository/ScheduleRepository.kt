@@ -130,7 +130,11 @@ class ScheduleRepository @Inject constructor(
 
     private fun cancelAlarm(schedule: Schedule) {
         schedule.days.forEach { dayOfWeek ->
-            val intent = Intent(context, ScheduledPlaybackReceiver::class.java)
+            val intent = Intent(context, ScheduledPlaybackReceiver::class.java).apply {
+                action = ScheduledPlaybackReceiver.ACTION_SCHEDULED_PLAYBACK
+                putExtra(ScheduledPlaybackReceiver.EXTRA_SCHEDULE_ID, schedule.id)
+                putExtra(ScheduledPlaybackReceiver.EXTRA_DAY_OF_WEEK, dayOfWeek)
+            }
             val requestCode = "${schedule.id}_$dayOfWeek".hashCode()
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -139,6 +143,7 @@ class ScheduleRepository @Inject constructor(
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel() // Also cancel the PendingIntent itself
         }
     }
 

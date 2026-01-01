@@ -93,7 +93,7 @@ class ScheduledPlaybackReceiver : BroadcastReceiver() {
                     context.startForegroundService(serviceIntent)
                 }
 
-                // Reschedule for next occurrence
+                // Reschedule for next week's occurrence
                 schedule?.let {
                     scheduleRepository.scheduleAlarm(it)
                 }

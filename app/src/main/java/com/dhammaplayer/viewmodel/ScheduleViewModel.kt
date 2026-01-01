@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,9 +28,18 @@ class ScheduleViewModel @Inject constructor(
     val schedules: StateFlow<List<Schedule>> = scheduleRepository.getAllSchedules()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun addSchedule(time: String = "07:00", days: List<Int> = listOf(1, 2, 3, 4, 5)) {
+    fun addSchedule() {
+        // Get current time
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        val currentTime = String.format(Locale.US, "%02d:%02d", hour, minute)
+
+        // All days enabled by default (0=Sunday through 6=Saturday)
+        val allDays = listOf(0, 1, 2, 3, 4, 5, 6)
+
         viewModelScope.launch {
-            scheduleRepository.createSchedule(time, days)
+            scheduleRepository.createSchedule(currentTime, allDays)
         }
     }
 
