@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.dhammaplayer"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.dhammaplayer"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 
@@ -36,12 +36,24 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     buildFeatures {
         compose = true
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+        unitTests.all {
+            it.useJUnitPlatform()
+        }
     }
 }
 
@@ -88,5 +100,15 @@ dependencies {
 
     // DataStore
     implementation(libs.datastore.preferences)
+
+    // Unit Testing
+    testImplementation(libs.junit6.api)
+    testImplementation(libs.junit6.params)
+    testRuntimeOnly(libs.junit6.engine)
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockk.android)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.androidx.test.core)
 }
 
