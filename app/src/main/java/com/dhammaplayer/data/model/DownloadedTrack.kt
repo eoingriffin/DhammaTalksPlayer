@@ -11,6 +11,7 @@ data class DownloadedTrack(
     @PrimaryKey
     val trackId: String,
     val filePath: String,
-    val downloadedAt: Long // timestamp in milliseconds
+    val downloadedAt: Long, // timestamp in milliseconds
+    val isManualDownload: Boolean = true // false for auto-cached files
 )
 

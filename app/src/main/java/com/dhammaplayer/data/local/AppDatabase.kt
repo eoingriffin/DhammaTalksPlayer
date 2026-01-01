@@ -19,7 +19,7 @@ import com.dhammaplayer.data.model.TrackProgress
         Schedule::class,
         DownloadedTrack::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(DaysConverter::class)
@@ -36,6 +36,13 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE audio_tracks ADD COLUMN source TEXT NOT NULL DEFAULT '${TalkSource.EVENING.name}'")
                 // Add talkSource column to schedules table with default EVENING
                 db.execSQL("ALTER TABLE schedules ADD COLUMN talkSource TEXT NOT NULL DEFAULT '${TalkSource.EVENING.name}'")
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add isManualDownload column to downloads table with default TRUE (existing downloads are manual)
+                db.execSQL("ALTER TABLE downloads ADD COLUMN isManualDownload INTEGER NOT NULL DEFAULT 1")
             }
         }
     }

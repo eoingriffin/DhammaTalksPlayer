@@ -21,8 +21,17 @@ class DownloadRepository @Inject constructor(
     private val downloadDao: DownloadDao,
     private val okHttpClient: OkHttpClient
 ) {
+    companion object {
+        private const val MAX_AUTO_CACHE_FILES = 15
+    }
+
     private val downloadsDir: File
         get() = File(context.filesDir, "audio_downloads").also {
+            if (!it.exists()) it.mkdirs()
+        }
+
+    private val autoCacheDir: File
+        get() = File(context.filesDir, "audio_cache").also {
             if (!it.exists()) it.mkdirs()
         }
 
@@ -39,9 +48,41 @@ class DownloadRepository @Inject constructor(
 
     suspend fun downloadTrack(
         track: AudioTrack,
-        onProgress: (Float) -> Unit = {}
+        onProgress: (Float) -> Unit = {},
+        isManualDownload: Boolean = true
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
+            // Check if already cached as auto-cache
+            val existing = downloadDao.getDownload(track.id)
+            if (existing != null && !existing.isManualDownload && isManualDownload) {
+                // Convert auto-cache to manual download by moving file and updating record
+                val fileName = "${track.id.hashCode()}.mp3"
+                val sourceFile = File(existing.filePath)
+                val targetFile = File(downloadsDir, fileName)
+
+                // Move file from cache to downloads directory
+                if (sourceFile.exists()) {
+                    sourceFile.copyTo(targetFile, overwrite = true)
+                    sourceFile.delete()
+                }
+
+                // Update database record
+                downloadDao.insertDownload(
+                    existing.copy(
+                        filePath = targetFile.absolutePath,
+                        downloadedAt = System.currentTimeMillis(),
+                        isManualDownload = true
+                    )
+                )
+
+                return@withContext Result.success(targetFile.absolutePath)
+            }
+
+            // If already exists as manual download, just return it
+            if (existing != null && existing.isManualDownload) {
+                return@withContext Result.success(existing.filePath)
+            }
+
             val request = Request.Builder()
                 .url(track.audioUrl)
                 .build()
@@ -59,7 +100,8 @@ class DownloadRepository @Inject constructor(
 
             val contentLength = body.contentLength()
             val fileName = "${track.id.hashCode()}.mp3"
-            val file = File(downloadsDir, fileName)
+            val targetDir = if (isManualDownload) downloadsDir else autoCacheDir
+            val file = File(targetDir, fileName)
 
             FileOutputStream(file).use { output ->
                 body.byteStream().use { input ->
@@ -82,9 +124,15 @@ class DownloadRepository @Inject constructor(
                 DownloadedTrack(
                     trackId = track.id,
                     filePath = file.absolutePath,
-                    downloadedAt = System.currentTimeMillis()
+                    downloadedAt = System.currentTimeMillis(),
+                    isManualDownload = isManualDownload
                 )
             )
+
+            // If this is an auto-cache, manage the cache limit
+            if (!isManualDownload) {
+                manageAutoCacheLimit()
+            }
 
             Result.success(file.absolutePath)
         } catch (e: Exception) {
@@ -105,6 +153,51 @@ class DownloadRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Auto-cache a track that's being streamed.
+     * This is separate from manual downloads and is limited to MAX_AUTO_CACHE_FILES.
+     */
+    suspend fun autoCacheTrack(track: AudioTrack): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            // Check if already cached (manual or auto)
+            val existing = downloadDao.getDownload(track.id)
+            if (existing != null) {
+                // Already cached, just update timestamp
+                downloadDao.insertDownload(
+                    existing.copy(downloadedAt = System.currentTimeMillis())
+                )
+                return@withContext Result.success(existing.filePath)
+            }
+
+            // Download as auto-cache
+            downloadTrack(track, isManualDownload = false)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Manage auto-cache limit by removing oldest files when over MAX_AUTO_CACHE_FILES.
+     * Manual downloads are never removed by this method.
+     */
+    private suspend fun manageAutoCacheLimit() {
+        val autoCachedFiles = downloadDao.getAutoCachedFiles()
+        if (autoCachedFiles.size > MAX_AUTO_CACHE_FILES) {
+            val filesToRemove = autoCachedFiles.take(autoCachedFiles.size - MAX_AUTO_CACHE_FILES)
+
+            // Delete files from disk
+            filesToRemove.forEach { download ->
+                val file = File(download.filePath)
+                if (file.exists()) {
+                    file.delete()
+                }
+            }
+
+            // Delete from database
+            downloadDao.deleteDownloads(filesToRemove.map { it.trackId })
         }
     }
 }

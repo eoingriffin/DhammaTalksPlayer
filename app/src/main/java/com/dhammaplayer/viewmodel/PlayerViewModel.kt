@@ -171,6 +171,7 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             val localFilePath = downloadRepository.getLocalFilePath(track.id)
             val audioUri = localFilePath ?: track.audioUrl
+            val isStreaming = localFilePath == null
 
             mediaController?.let { controller ->
                 // Check if this track is already loaded in the media controller
@@ -204,6 +205,13 @@ class PlayerViewModel @Inject constructor(
                     controller.setMediaItem(mediaItem, startPosition)
                     controller.prepare()
                     controller.play()
+
+                    // Auto-cache the track if streaming from remote URL
+                    if (isStreaming) {
+                        launch {
+                            downloadRepository.autoCacheTrack(track)
+                        }
+                    }
                 }
             }
 
