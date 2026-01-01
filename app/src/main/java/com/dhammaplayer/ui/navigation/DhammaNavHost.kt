@@ -93,10 +93,14 @@ fun DhammaNavHost(
             playerUiState.currentTrack?.let { track ->
                 // Check if the viewed track is the same as the playing track
                 val isViewingPlayingTrack = track.id == currentTrackId
-                // Controls enabled if viewing the playing track OR if no audio is actively playing
-                // (paused audio means isPlaying=false, so controls should be enabled)
-                val isAudioActivePlaying = playerUiState.isPlaying
-                val isControlsEnabled = isViewingPlayingTrack || !isAudioActivePlaying
+                // Controls enabled if:
+                // 1. Viewing the track that's loaded in the player (playing or paused), OR
+                // 2. Nothing is actively playing (isPlaying is false)
+                // AND the duration is known (greater than 0)
+                val isNothingActivelyPlaying = !playerUiState.isPlaying
+                val hasDuration = playerUiState.duration > 0
+                val isControlsEnabled =
+                    (isViewingPlayingTrack || isNothingActivelyPlaying) && hasDuration
 
                 PlayerScreen(
                     track = track,

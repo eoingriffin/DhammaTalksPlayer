@@ -32,9 +32,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dhammaplayer.ui.theme.Indigo200
 import com.dhammaplayer.ui.theme.Indigo600
 import com.dhammaplayer.ui.theme.Slate200
+import com.dhammaplayer.ui.theme.Slate300
 import com.dhammaplayer.ui.theme.Slate500
 
 @Composable
@@ -95,13 +95,13 @@ fun PlaybackControlsBar(
                         text = formatTime(currentPosition),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Slate500
+                        color = if (isEnabled) Slate500 else Slate300
                     )
                     Text(
                         text = formatTime(duration),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = Slate500
+                        color = if (isEnabled) Slate500 else Slate300
                     )
                 }
             }
