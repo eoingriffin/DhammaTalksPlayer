@@ -15,15 +15,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -31,9 +39,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhammaplayer.data.model.AudioTrack
+import com.dhammaplayer.data.model.TalkSource
 import com.dhammaplayer.data.model.TrackProgress
 import com.dhammaplayer.ui.components.TrackItemCard
-import com.dhammaplayer.ui.theme.Indigo100
 import com.dhammaplayer.ui.theme.Indigo600
 import com.dhammaplayer.ui.theme.Indigo700
 import com.dhammaplayer.ui.theme.Red500
@@ -51,6 +59,8 @@ fun LibraryScreen(
     isPlaying: Boolean,
     isLoading: Boolean,
     error: String?,
+    selectedSource: TalkSource,
+    onSourceChange: (TalkSource) -> Unit,
     onTrackSelect: (AudioTrack) -> Unit,
     onPlayPauseTrack: (AudioTrack) -> Unit,
     onDownload: (AudioTrack) -> Unit,
@@ -154,22 +164,51 @@ fun LibraryScreen(
                     item {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Latest Talks",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Slate500,
-                                letterSpacing = 1.sp
-                            )
+                            // Source dropdown
+                            var expanded by remember { mutableStateOf(false) }
+                            Box {
+                                TextButton(onClick = { expanded = true }) {
+                                    Text(
+                                        text = selectedSource.displayName,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Indigo700,
+                                        letterSpacing = 1.sp
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Select source",
+                                        tint = Indigo700
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    TalkSource.entries.forEach { source ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = source.displayName,
+                                                    fontWeight = if (source == selectedSource) FontWeight.Bold else FontWeight.Normal
+                                                )
+                                            },
+                                            onClick = {
+                                                onSourceChange(source)
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
 
                             Box(
                                 modifier = Modifier
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .padding(horizontal = 8.dp, vertical = 0.dp)
                             ) {
                                 Text(
                                     text = "${tracks.size} Tracks",

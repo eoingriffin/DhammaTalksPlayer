@@ -13,6 +13,9 @@ interface AudioTrackDao {
     @Query("SELECT * FROM audio_tracks ORDER BY pubDate DESC")
     fun getAllTracks(): Flow<List<AudioTrack>>
 
+    @Query("SELECT * FROM audio_tracks WHERE source = :source ORDER BY pubDate DESC")
+    fun getTracksBySource(source: String): Flow<List<AudioTrack>>
+
     @Query("SELECT * FROM audio_tracks WHERE id = :id")
     suspend fun getTrack(id: String): AudioTrack?
 
@@ -21,6 +24,9 @@ interface AudioTrackDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrack(track: AudioTrack)
+
+    @Query("DELETE FROM audio_tracks WHERE source = :source")
+    suspend fun deleteTracksBySource(source: String)
 
     @Query("DELETE FROM audio_tracks")
     suspend fun deleteAllTracks()

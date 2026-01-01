@@ -21,12 +21,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,19 +53,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhammaplayer.data.model.Schedule
-import java.util.Locale
-import com.dhammaplayer.ui.theme.Amber100
+import com.dhammaplayer.data.model.TalkSource
 import com.dhammaplayer.ui.theme.Amber50
 import com.dhammaplayer.ui.theme.Amber800
 import com.dhammaplayer.ui.theme.Indigo600
 import com.dhammaplayer.ui.theme.Red400
-import com.dhammaplayer.ui.theme.Slate100
 import com.dhammaplayer.ui.theme.Slate200
 import com.dhammaplayer.ui.theme.Slate300
 import com.dhammaplayer.ui.theme.Slate400
 import com.dhammaplayer.ui.theme.Slate50
 import com.dhammaplayer.ui.theme.Slate500
 import com.dhammaplayer.ui.theme.Slate800
+import java.util.Locale
 
 @Composable
 fun ScheduleScreen(
@@ -104,7 +106,8 @@ fun ScheduleScreen(
                 Button(
                     onClick = onAddSchedule,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Indigo600
+                        containerColor = Indigo600,
+                        contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
@@ -175,6 +178,9 @@ fun ScheduleScreen(
                 onDaysChange = { newDays ->
                     onUpdateSchedule(schedule.copy(days = newDays))
                 },
+                onSourceChange = { newSource ->
+                    onUpdateSchedule(schedule.copy(talkSource = newSource.name))
+                },
                 onToggleEnabled = { enabled ->
                     onToggleEnabled(schedule.id, enabled)
                 },
@@ -215,10 +221,18 @@ private fun ScheduleItemCard(
     schedule: Schedule,
     onTimeChange: (String) -> Unit,
     onDaysChange: (List<Int>) -> Unit,
+    onSourceChange: (TalkSource) -> Unit,
     onToggleEnabled: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
+    var showSourceDropdown by remember { mutableStateOf(false) }
+
+    val currentSource = try {
+        TalkSource.valueOf(schedule.talkSource)
+    } catch (_: Exception) {
+        TalkSource.EVENING
+    }
 
     // Time picker dialog
     if (showTimePicker) {
@@ -331,6 +345,45 @@ private fun ScheduleItemCard(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isSelected) Color.White else Slate400
+                            )
+                        }
+                    }
+                }
+
+                // Source selector dropdown
+                Box(modifier = Modifier.padding(top = 4.dp)) {
+                    TextButton(
+                        onClick = { showSourceDropdown = true },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = currentSource.displayName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Slate500
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Select source",
+                            tint = Slate500,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showSourceDropdown,
+                        onDismissRequest = { showSourceDropdown = false }
+                    ) {
+                        TalkSource.entries.forEach { source ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = source.displayName,
+                                        fontWeight = if (source == currentSource) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    onSourceChange(source)
+                                    showSourceDropdown = false
+                                }
                             )
                         }
                     }

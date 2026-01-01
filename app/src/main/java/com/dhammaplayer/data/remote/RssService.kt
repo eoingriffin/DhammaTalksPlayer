@@ -1,6 +1,7 @@
 package com.dhammaplayer.data.remote
 
 import com.dhammaplayer.data.model.AudioTrack
+import com.dhammaplayer.data.model.TalkSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -15,14 +16,11 @@ import javax.inject.Singleton
 class RssService @Inject constructor(
     private val okHttpClient: OkHttpClient
 ) {
-    companion object {
-        private const val RSS_FEED_URL = "https://www.dhammatalks.org/rss/evening.xml"
-    }
-
-    suspend fun fetchDhammaTalks(): Result<List<AudioTrack>> = withContext(Dispatchers.IO) {
+    suspend fun fetchDhammaTalks(source: TalkSource): Result<List<AudioTrack>> =
+        withContext(Dispatchers.IO) {
         try {
             val request = Request.Builder()
-                .url(RSS_FEED_URL)
+                .url(source.rssUrl)
                 .build()
 
             val response = okHttpClient.newCall(request).execute()
@@ -36,14 +34,14 @@ class RssService @Inject constructor(
             val xmlText = response.body?.string()
                 ?: return@withContext Result.failure(Exception("Empty response body"))
 
-            val tracks = parseRssFeed(xmlText)
+            val tracks = parseRssFeed(xmlText, source)
             Result.success(tracks)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    private fun parseRssFeed(xmlText: String): List<AudioTrack> {
+    private fun parseRssFeed(xmlText: String, source: TalkSource): List<AudioTrack> {
         val tracks = mutableListOf<AudioTrack>()
 
         val factory = XmlPullParserFactory.newInstance()
@@ -97,7 +95,8 @@ class RssService @Inject constructor(
                                     link = currentTrack["link"] ?: "",
                                     pubDate = currentTrack["pubDate"] ?: "",
                                     audioUrl = audioUrl,
-                                    description = currentTrack["description"] ?: ""
+                                    description = currentTrack["description"] ?: "",
+                                    source = source.name
                                 )
                             )
                         }

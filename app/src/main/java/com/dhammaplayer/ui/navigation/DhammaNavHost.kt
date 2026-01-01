@@ -207,6 +207,8 @@ fun DhammaNavHost(
                                 isPlaying = playerUiState.isPlaying,
                                 isLoading = tracksUiState.isLoading,
                                 error = tracksUiState.error,
+                                selectedSource = tracksUiState.selectedSource,
+                                onSourceChange = tracksViewModel::setSelectedSource,
                                 onTrackSelect = { track ->
                                     playerViewModel.selectTrack(track)
                                     currentScreen = AppScreen.PLAYER

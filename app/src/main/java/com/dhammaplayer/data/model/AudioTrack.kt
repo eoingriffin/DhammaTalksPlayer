@@ -15,6 +15,7 @@ data class AudioTrack(
     val pubDate: String,
     val audioUrl: String,
     val description: String,
-    val duration: Long? = null
+    val duration: Long? = null,
+    val source: String = TalkSource.EVENING.name
 )
 

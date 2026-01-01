@@ -15,7 +15,8 @@ data class Schedule(
     val id: String,
     val time: String, // HH:mm format
     val days: List<Int>, // 0-6 (Sun-Sat)
-    val enabled: Boolean
+    val enabled: Boolean,
+    val talkSource: String = TalkSource.EVENING.name
 )
 
 /**

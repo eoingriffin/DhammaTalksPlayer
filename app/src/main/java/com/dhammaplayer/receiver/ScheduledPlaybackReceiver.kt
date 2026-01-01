@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.dhammaplayer.data.model.AudioTrack
+import com.dhammaplayer.data.model.TalkSource
 import com.dhammaplayer.data.repository.DownloadRepository
 import com.dhammaplayer.data.repository.ScheduleRepository
 import com.dhammaplayer.data.repository.TracksRepository
@@ -44,7 +45,19 @@ class ScheduledPlaybackReceiver : BroadcastReceiver() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val tracks = tracksRepository.getTracks().first()
+                // Get the schedule to determine which source to use
+                val schedule = scheduleRepository.getEnabledSchedules()
+                    .find { it.id == scheduleId }
+
+                val talkSource = try {
+                    TalkSource.valueOf(schedule?.talkSource ?: TalkSource.EVENING.name)
+                } catch (_: Exception) {
+                    TalkSource.EVENING
+                }
+
+                val allTracks = tracksRepository.getAllTracks().first()
+                // Filter tracks by the schedule's source
+                val tracks = allTracks.filter { it.source == talkSource.name }
                 val isNetworkAvailable = isNetworkAvailable(context)
 
                 // Find a track to play
@@ -52,13 +65,13 @@ class ScheduledPlaybackReceiver : BroadcastReceiver() {
                 val audioUri: String?
 
                 if (isNetworkAvailable) {
-                    // Online: find first unfinished track, prefer local file if available
+                    // Online: find first unfinished track from the source, prefer local file if available
                     trackToPlay = tracksRepository.getFirstUnfinishedTrack(tracks)
                     audioUri = trackToPlay?.let { track ->
                         downloadRepository.getLocalFilePath(track.id) ?: track.audioUrl
                     }
                 } else {
-                    // Offline: find first unfinished downloaded track
+                    // Offline: find first unfinished downloaded track from the source
                     val downloadedIds = downloadRepository.getDownloadedTrackIds().first().toSet()
                     val downloadedTracks = tracks.filter { it.id in downloadedIds }
                     trackToPlay = tracksRepository.getFirstUnfinishedTrack(downloadedTracks)
@@ -81,8 +94,6 @@ class ScheduledPlaybackReceiver : BroadcastReceiver() {
                 }
 
                 // Reschedule for next occurrence
-                val schedule = scheduleRepository.getEnabledSchedules()
-                    .find { it.id == scheduleId }
                 schedule?.let {
                     scheduleRepository.scheduleAlarm(it)
                 }
