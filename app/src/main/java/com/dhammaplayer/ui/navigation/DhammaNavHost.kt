@@ -1,5 +1,6 @@
 package com.dhammaplayer.ui.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,6 +67,20 @@ fun DhammaNavHost(
     // Connect to playback service
     LaunchedEffect(Unit) {
         playerViewModel.connectToService()
+    }
+
+    // Handle back button - navigate to Library from other screens
+    BackHandler(enabled = currentScreen == AppScreen.PLAYER || selectedNavItem != BottomNavItem.LIBRARY) {
+        when {
+            // If on player screen, go back to main screen
+            currentScreen == AppScreen.PLAYER -> {
+                currentScreen = AppScreen.MAIN
+            }
+            // If on any other tab, go back to Library
+            selectedNavItem != BottomNavItem.LIBRARY -> {
+                selectedNavItem = BottomNavItem.LIBRARY
+            }
+        }
     }
 
     // Get downloaded tracks
