@@ -15,15 +15,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,6 +62,7 @@ fun PlayerScreen(
     onSkipForward: () -> Unit,
     onSkipBack: () -> Unit,
     onUpdatePosition: () -> Unit,
+    onReset: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Update position periodically while playing
@@ -158,6 +162,27 @@ fun PlayerScreen(
                 fontWeight = FontWeight.Medium,
                 color = Slate500
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Reset button
+            TextButton(
+                onClick = onReset,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.RestartAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Reset",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // Playback controls

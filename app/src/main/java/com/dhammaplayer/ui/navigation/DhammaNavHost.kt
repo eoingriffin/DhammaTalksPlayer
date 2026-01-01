@@ -127,6 +127,9 @@ fun DhammaNavHost(
                         if (isViewingPlayingTrack) {
                             playerViewModel.updatePosition()
                         }
+                    },
+                    onReset = {
+                        playerViewModel.resetTrackProgress(track.id)
                     }
                 )
             }

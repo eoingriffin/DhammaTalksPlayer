@@ -11,6 +11,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.dhammaplayer.data.model.AudioTrack
+import com.dhammaplayer.data.model.TrackProgress
 import com.dhammaplayer.data.repository.DownloadRepository
 import com.dhammaplayer.data.repository.TracksRepository
 import com.dhammaplayer.media.PlaybackService
@@ -288,6 +289,41 @@ class PlayerViewModel @Inject constructor(
 
         _currentTrackId.value = null
         _uiState.value = PlayerUiState(isConnected = _uiState.value.isConnected)
+    }
+
+    /**
+     * Resets the progress for a track back to the beginning.
+     * If the track is currently playing/loaded, stops playback and seeks to start.
+     */
+    fun resetTrackProgress(trackId: String) {
+        viewModelScope.launch {
+            // Delete the progress entry to reset it
+            tracksRepository.saveProgress(
+                TrackProgress(
+                    trackId = trackId,
+                    currentTime = 0L,
+                    duration = 0L,
+                    finished = false,
+                    lastPlayed = System.currentTimeMillis()
+                )
+            )
+
+            // If this track is currently loaded in the player, stop it and seek to start
+            if (_currentTrackId.value == trackId) {
+                mediaController?.let { controller ->
+                    controller.stop()
+                    controller.seekTo(0)
+                }
+            }
+
+            // Update UI state to show position at start (for both playing and viewed tracks)
+            if (_uiState.value.currentTrack?.id == trackId) {
+                _uiState.value = _uiState.value.copy(
+                    currentPosition = 0L,
+                    isPlaying = false
+                )
+            }
+        }
     }
 
     override fun onCleared() {
