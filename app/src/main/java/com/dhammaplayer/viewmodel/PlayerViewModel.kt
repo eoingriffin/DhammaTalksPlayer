@@ -2,6 +2,7 @@ package com.dhammaplayer.viewmodel
 
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -13,6 +14,7 @@ import com.dhammaplayer.data.model.AudioTrack
 import com.dhammaplayer.data.repository.DownloadRepository
 import com.dhammaplayer.data.repository.TracksRepository
 import com.dhammaplayer.media.PlaybackService
+import com.dhammaplayer.util.AlbumArtExtractor
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,14 +30,16 @@ data class PlayerUiState(
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0L,
     val duration: Long = 0L,
-    val isConnected: Boolean = false
+    val isConnected: Boolean = false,
+    val albumArt: Bitmap? = null
 )
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val tracksRepository: TracksRepository,
-    private val downloadRepository: DownloadRepository
+    private val downloadRepository: DownloadRepository,
+    private val albumArtExtractor: AlbumArtExtractor
 ) : ViewModel() {
 
     private var controllerFuture: ListenableFuture<MediaController>? = null
@@ -130,7 +134,11 @@ class PlayerViewModel @Inject constructor(
             }
 
             _currentTrackId.value = track.id
-            _uiState.value = _uiState.value.copy(currentTrack = track)
+            _uiState.value = _uiState.value.copy(currentTrack = track, albumArt = null)
+
+            // Extract album art in background
+            val albumArt = albumArtExtractor.extractAlbumArt(audioUri)
+            _uiState.value = _uiState.value.copy(albumArt = albumArt)
         }
     }
 

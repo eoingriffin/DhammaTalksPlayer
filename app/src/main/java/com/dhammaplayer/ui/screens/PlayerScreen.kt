@@ -1,5 +1,7 @@
 package com.dhammaplayer.ui.screens
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,6 +48,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun PlayerScreen(
     track: AudioTrack,
+    albumArt: Bitmap?,
     isPlaying: Boolean,
     currentPosition: Long,
     duration: Long,
@@ -106,7 +111,7 @@ fun PlayerScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Album art placeholder
+            // Album art
             Box(
                 modifier = Modifier
                     .size(256.dp)
@@ -114,12 +119,21 @@ fun PlayerScreen(
                     .background(Indigo100),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.LibraryMusic,
-                    contentDescription = null,
-                    tint = Indigo400,
-                    modifier = Modifier.size(100.dp)
-                )
+                if (albumArt != null) {
+                    Image(
+                        bitmap = albumArt.asImageBitmap(),
+                        contentDescription = "Album Art",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.LibraryMusic,
+                        contentDescription = null,
+                        tint = Indigo400,
+                        modifier = Modifier.size(100.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))

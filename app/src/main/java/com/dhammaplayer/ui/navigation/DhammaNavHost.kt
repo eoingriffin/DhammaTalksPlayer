@@ -69,6 +69,7 @@ fun DhammaNavHost(
             playerUiState.currentTrack?.let { track ->
                 PlayerScreen(
                     track = track,
+                    albumArt = playerUiState.albumArt,
                     isPlaying = playerUiState.isPlaying,
                     currentPosition = playerUiState.currentPosition,
                     duration = playerUiState.duration,
