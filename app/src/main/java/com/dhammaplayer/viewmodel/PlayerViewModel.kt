@@ -116,7 +116,9 @@ class PlayerViewModel @Inject constructor(
      */
     fun selectTrack(track: AudioTrack) {
         viewModelScope.launch {
-            val audioUri = downloadRepository.getLocalFilePath(track.id) ?: track.audioUrl
+            val localFilePath = downloadRepository.getLocalFilePath(track.id)
+            val audioUri = localFilePath ?: track.audioUrl
+            val isLocalFile = localFilePath != null
 
             // If this track is currently loaded in the player, sync with player state
             if (_currentTrackId.value == track.id) {
@@ -132,6 +134,9 @@ class PlayerViewModel @Inject constructor(
                         duration = controller.duration.coerceAtLeast(0)
                     )
                 }
+                // For playing track, allow network access for album art
+                val albumArt = albumArtExtractor.extractAlbumArtForPlayingTrack(track.id, audioUri)
+                _uiState.value = _uiState.value.copy(albumArt = albumArt)
             } else {
                 // Viewing a different track - show saved progress
                 val savedProgress = tracksRepository.getProgress(track.id)
@@ -148,11 +153,11 @@ class PlayerViewModel @Inject constructor(
                     currentPosition = savedPosition,
                     duration = savedDuration
                 )
-            }
 
-            // Extract album art in background
-            val albumArt = albumArtExtractor.extractAlbumArt(audioUri)
-            _uiState.value = _uiState.value.copy(albumArt = albumArt)
+                // Only extract album art from local files to avoid network traffic
+                val albumArt = albumArtExtractor.extractAlbumArt(track.id, audioUri, isLocalFile)
+                _uiState.value = _uiState.value.copy(albumArt = albumArt)
+            }
         }
     }
 
@@ -163,7 +168,8 @@ class PlayerViewModel @Inject constructor(
      */
     fun playTrack(track: AudioTrack) {
         viewModelScope.launch {
-            val audioUri = downloadRepository.getLocalFilePath(track.id) ?: track.audioUrl
+            val localFilePath = downloadRepository.getLocalFilePath(track.id)
+            val audioUri = localFilePath ?: track.audioUrl
 
             mediaController?.let { controller ->
                 // Check if this track is already loaded in the media controller
@@ -207,8 +213,8 @@ class PlayerViewModel @Inject constructor(
                 albumArt = null
             )
 
-            // Extract album art in background
-            val albumArt = albumArtExtractor.extractAlbumArt(audioUri)
+            // Extract album art - allowed for playing track (audio is already streaming)
+            val albumArt = albumArtExtractor.extractAlbumArtForPlayingTrack(track.id, audioUri)
             _uiState.value = _uiState.value.copy(albumArt = albumArt)
         }
     }
