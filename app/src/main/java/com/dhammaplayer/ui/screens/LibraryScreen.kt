@@ -48,9 +48,11 @@ fun LibraryScreen(
     downloadedIds: Set<String>,
     downloadingIds: Set<String>,
     currentTrackId: String?,
+    isPlaying: Boolean,
     isLoading: Boolean,
     error: String?,
     onTrackSelect: (AudioTrack) -> Unit,
+    onPlayPauseTrack: (AudioTrack) -> Unit,
     onDownload: (AudioTrack) -> Unit,
     onRemoveDownload: (String) -> Unit,
     onRetry: () -> Unit,
@@ -183,13 +185,16 @@ fun LibraryScreen(
                         items = tracks,
                         key = { it.id }
                     ) { track ->
+                        val isTrackPlaying = track.id == currentTrackId && isPlaying
                         TrackItemCard(
                             track = track,
                             progress = progress[track.id],
                             isActive = track.id == currentTrackId,
+                            isPlaying = isTrackPlaying,
                             isDownloaded = downloadedIds.contains(track.id),
                             isDownloading = downloadingIds.contains(track.id),
                             onSelect = { onTrackSelect(track) },
+                            onPlayPause = { onPlayPauseTrack(track) },
                             onDownload = { onDownload(track) },
                             onRemove = { onRemoveDownload(track.id) }
                         )

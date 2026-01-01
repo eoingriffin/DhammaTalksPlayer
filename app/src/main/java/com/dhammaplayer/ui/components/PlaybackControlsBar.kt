@@ -40,6 +40,7 @@ import com.dhammaplayer.ui.theme.Slate500
 @Composable
 fun PlaybackControlsBar(
     isPlaying: Boolean,
+    isEnabled: Boolean,
     currentPosition: Long,
     duration: Long,
     onPlayPause: () -> Unit,
@@ -68,17 +69,21 @@ fun PlaybackControlsBar(
                 Slider(
                     value = if (duration > 0) currentPosition.toFloat() / duration else 0f,
                     onValueChange = { fraction ->
-                        if (duration > 0) {
+                        if (duration > 0 && isEnabled) {
                             onSeek((fraction * duration).toLong())
                         }
                     },
+                    enabled = isEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp),
                     colors = SliderDefaults.colors(
                         thumbColor = Indigo600,
                         activeTrackColor = Indigo600,
-                        inactiveTrackColor = Slate200
+                        inactiveTrackColor = Slate200,
+                        disabledThumbColor = Slate200,
+                        disabledActiveTrackColor = Slate200,
+                        disabledInactiveTrackColor = Slate200
                     )
                 )
 
@@ -110,6 +115,7 @@ fun PlaybackControlsBar(
                 // Skip back button
                 IconButton(
                     onClick = onSkipBack,
+                    enabled = isEnabled,
                     modifier = Modifier.size(48.dp)
                 ) {
                     Column(
@@ -118,13 +124,13 @@ fun PlaybackControlsBar(
                         Icon(
                             imageVector = Icons.Default.FastRewind,
                             contentDescription = "Skip back 10 seconds",
-                            tint = Slate500,
+                            tint = if (isEnabled) Slate500 else Slate200,
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
                             text = "10",
                             fontSize = 8.sp,
-                            color = Slate500
+                            color = if (isEnabled) Slate500 else Slate200
                         )
                     }
                 }
@@ -160,6 +166,7 @@ fun PlaybackControlsBar(
                 // Skip forward button
                 IconButton(
                     onClick = onSkipForward,
+                    enabled = isEnabled,
                     modifier = Modifier.size(48.dp)
                 ) {
                     Column(
@@ -168,13 +175,13 @@ fun PlaybackControlsBar(
                         Icon(
                             imageVector = Icons.Default.FastForward,
                             contentDescription = "Skip forward 30 seconds",
-                            tint = Slate500,
+                            tint = if (isEnabled) Slate500 else Slate200,
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
                             text = "30",
                             fontSize = 8.sp,
-                            color = Slate500
+                            color = if (isEnabled) Slate500 else Slate200
                         )
                     }
                 }

@@ -67,18 +67,43 @@ fun DhammaNavHost(
     when (currentScreen) {
         AppScreen.PLAYER -> {
             playerUiState.currentTrack?.let { track ->
+                // Check if the viewed track is the same as the playing track
+                val isViewingPlayingTrack = track.id == currentTrackId
+                // Controls enabled if viewing the playing track OR if no audio is actively playing
+                // (paused audio means isPlaying=false, so controls should be enabled)
+                val isAudioActivePlaying = playerUiState.isPlaying
+                val isControlsEnabled = isViewingPlayingTrack || !isAudioActivePlaying
+
                 PlayerScreen(
                     track = track,
                     albumArt = playerUiState.albumArt,
-                    isPlaying = playerUiState.isPlaying,
+                    isPlaying = isViewingPlayingTrack && playerUiState.isPlaying,
+                    isControlsEnabled = isControlsEnabled,
                     currentPosition = playerUiState.currentPosition,
                     duration = playerUiState.duration,
                     onBackClick = { currentScreen = AppScreen.MAIN },
-                    onPlayPause = playerViewModel::togglePlayPause,
-                    onSeek = playerViewModel::seekTo,
+                    onPlayPause = {
+                        if (isViewingPlayingTrack) {
+                            playerViewModel.togglePlayPause()
+                        } else {
+                            playerViewModel.playTrack(track)
+                        }
+                    },
+                    onSeek = { position ->
+                        if (isViewingPlayingTrack) {
+                            playerViewModel.seekTo(position)
+                        } else {
+                            // Update viewed position when nothing is actively playing
+                            playerViewModel.updateViewedPosition(position)
+                        }
+                    },
                     onSkipForward = playerViewModel::skipForward,
                     onSkipBack = playerViewModel::skipBackward,
-                    onUpdatePosition = playerViewModel::updatePosition
+                    onUpdatePosition = {
+                        if (isViewingPlayingTrack) {
+                            playerViewModel.updatePosition()
+                        }
+                    }
                 )
             }
         }
@@ -89,7 +114,7 @@ fun DhammaNavHost(
                     TopAppBar(
                         title = {
                             Text(
-                                text = "Dhamma Player",
+                                text = "Dhamma Talks",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -102,13 +127,18 @@ fun DhammaNavHost(
                 },
                 bottomBar = {
                     Column {
-                        // Mini player
-                        playerUiState.currentTrack?.let { track ->
+                        // Mini player - shows the track that's actually playing
+                        playerUiState.playingTrack?.let { track ->
                             MiniPlayer(
                                 track = track,
                                 isPlaying = playerUiState.isPlaying,
-                                onTap = { currentScreen = AppScreen.PLAYER },
-                                onPlayPause = playerViewModel::togglePlayPause
+                                onTap = {
+                                    // Navigate to the playing track's player screen
+                                    playerViewModel.selectTrack(track)
+                                    currentScreen = AppScreen.PLAYER
+                                },
+                                onPlayPause = playerViewModel::togglePlayPause,
+                                onStop = playerViewModel::stopPlayback
                             )
                         }
 
@@ -133,11 +163,19 @@ fun DhammaNavHost(
                                 downloadedIds = tracksUiState.downloadedIds,
                                 downloadingIds = tracksUiState.downloadingIds,
                                 currentTrackId = currentTrackId,
+                                isPlaying = playerUiState.isPlaying,
                                 isLoading = tracksUiState.isLoading,
                                 error = tracksUiState.error,
                                 onTrackSelect = { track ->
-                                    playerViewModel.playTrack(track)
+                                    playerViewModel.selectTrack(track)
                                     currentScreen = AppScreen.PLAYER
+                                },
+                                onPlayPauseTrack = { track ->
+                                    if (currentTrackId == track.id && playerUiState.isPlaying) {
+                                        playerViewModel.togglePlayPause()
+                                    } else {
+                                        playerViewModel.playTrack(track)
+                                    }
                                 },
                                 onDownload = tracksViewModel::downloadTrack,
                                 onRemoveDownload = tracksViewModel::removeDownload,
@@ -150,9 +188,17 @@ fun DhammaNavHost(
                                 downloadedTracks = downloadedTracks,
                                 progress = tracksUiState.progress,
                                 currentTrackId = currentTrackId,
+                                isPlaying = playerUiState.isPlaying,
                                 onTrackSelect = { track ->
-                                    playerViewModel.playTrack(track)
+                                    playerViewModel.selectTrack(track)
                                     currentScreen = AppScreen.PLAYER
+                                },
+                                onPlayPauseTrack = { track ->
+                                    if (currentTrackId == track.id && playerUiState.isPlaying) {
+                                        playerViewModel.togglePlayPause()
+                                    } else {
+                                        playerViewModel.playTrack(track)
+                                    }
                                 },
                                 onRemoveDownload = tracksViewModel::removeDownload,
                                 onBackClick = { selectedNavItem = BottomNavItem.LIBRARY }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -36,6 +37,7 @@ fun MiniPlayer(
     isPlaying: Boolean,
     onTap: () -> Unit,
     onPlayPause: () -> Unit,
+    onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -54,17 +56,17 @@ fun MiniPlayer(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Play icon container
-            Box(
+            // Stop button
+            IconButton(
+                onClick = onStop,
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
+                    .background(Color.White.copy(alpha = 0.2f))
             ) {
                 Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = null,
+                    imageVector = Icons.Default.Stop,
+                    contentDescription = "Stop",
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.Save
@@ -50,9 +51,11 @@ fun TrackItemCard(
     track: AudioTrack,
     progress: TrackProgress?,
     isActive: Boolean,
+    isPlaying: Boolean,
     isDownloaded: Boolean,
     isDownloading: Boolean,
     onSelect: () -> Unit,
+    onPlayPause: () -> Unit,
     onDownload: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
@@ -199,12 +202,17 @@ fun TrackItemCard(
                     }
                 }
 
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play",
-                    tint = if (isActive) Indigo600 else Slate400,
-                    modifier = Modifier.size(20.dp)
-                )
+                IconButton(
+                    onClick = onPlayPause,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
+                        tint = if (isActive) Indigo600 else Slate400,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             // Progress bar

@@ -50,6 +50,7 @@ fun PlayerScreen(
     track: AudioTrack,
     albumArt: Bitmap?,
     isPlaying: Boolean,
+    isControlsEnabled: Boolean,
     currentPosition: Long,
     duration: Long,
     onBackClick: () -> Unit,
@@ -162,6 +163,7 @@ fun PlayerScreen(
         // Playback controls
         PlaybackControlsBar(
             isPlaying = isPlaying,
+            isEnabled = isControlsEnabled,
             currentPosition = displayPosition,
             duration = duration,
             onPlayPause = onPlayPause,

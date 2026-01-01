@@ -42,7 +42,9 @@ fun DownloadsScreen(
     downloadedTracks: List<AudioTrack>,
     progress: Map<String, TrackProgress>,
     currentTrackId: String?,
+    isPlaying: Boolean,
     onTrackSelect: (AudioTrack) -> Unit,
+    onPlayPauseTrack: (AudioTrack) -> Unit,
     onRemoveDownload: (String) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -138,13 +140,16 @@ fun DownloadsScreen(
                     items = downloadedTracks,
                     key = { it.id }
                 ) { track ->
+                    val isTrackPlaying = track.id == currentTrackId && isPlaying
                     TrackItemCard(
                         track = track,
                         progress = progress[track.id],
                         isActive = track.id == currentTrackId,
+                        isPlaying = isTrackPlaying,
                         isDownloaded = true,
                         isDownloading = false,
                         onSelect = { onTrackSelect(track) },
+                        onPlayPause = { onPlayPauseTrack(track) },
                         onDownload = { },
                         onRemove = { onRemoveDownload(track.id) }
                     )

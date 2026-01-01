@@ -26,7 +26,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PlayerUiState(
-    val currentTrack: AudioTrack? = null,
+    val currentTrack: AudioTrack? = null,      // Track being viewed in player screen
+    val playingTrack: AudioTrack? = null,      // Track actually playing in media controller
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0L,
     val duration: Long = 0L,
@@ -65,7 +66,10 @@ class PlayerViewModel @Inject constructor(
                 _currentTrackId.value = item.mediaId
                 viewModelScope.launch {
                     val track = tracksRepository.getTrack(item.mediaId)
-                    _uiState.value = _uiState.value.copy(currentTrack = track)
+                    _uiState.value = _uiState.value.copy(
+                        currentTrack = track,
+                        playingTrack = track
+                    )
                 }
             }
         }
@@ -96,45 +100,112 @@ class PlayerViewModel @Inject constructor(
                     _currentTrackId.value = item.mediaId
                     viewModelScope.launch {
                         val track = tracksRepository.getTrack(item.mediaId)
-                        _uiState.value = _uiState.value.copy(currentTrack = track)
+                        _uiState.value = _uiState.value.copy(
+                            currentTrack = track,
+                            playingTrack = track
+                        )
                     }
                 }
             }
         }, MoreExecutors.directExecutor())
     }
 
+    /**
+     * Selects a track for viewing without affecting playback.
+     * Updates the UI to show the selected track's info.
+     */
+    fun selectTrack(track: AudioTrack) {
+        viewModelScope.launch {
+            val audioUri = downloadRepository.getLocalFilePath(track.id) ?: track.audioUrl
+
+            // If this track is currently loaded in the player, sync with player state
+            if (_currentTrackId.value == track.id) {
+                // Update currentTrack to match playingTrack and sync position from player
+                _uiState.value = _uiState.value.copy(
+                    currentTrack = track,
+                    albumArt = null
+                )
+                // Sync position from the media controller
+                mediaController?.let { controller ->
+                    _uiState.value = _uiState.value.copy(
+                        currentPosition = controller.currentPosition,
+                        duration = controller.duration.coerceAtLeast(0)
+                    )
+                }
+            } else {
+                // Viewing a different track - show saved progress
+                val savedProgress = tracksRepository.getProgress(track.id)
+                val savedPosition = if (savedProgress != null && !savedProgress.finished) {
+                    savedProgress.currentTime
+                } else {
+                    0L
+                }
+                val savedDuration = savedProgress?.duration ?: 0L
+
+                _uiState.value = _uiState.value.copy(
+                    currentTrack = track,
+                    albumArt = null,
+                    currentPosition = savedPosition,
+                    duration = savedDuration
+                )
+            }
+
+            // Extract album art in background
+            val albumArt = albumArtExtractor.extractAlbumArt(audioUri)
+            _uiState.value = _uiState.value.copy(albumArt = albumArt)
+        }
+    }
+
+    /**
+     * Plays a track immediately. Use this when the user explicitly presses a play button.
+     * If the track is already loaded in the player, just play/resume it.
+     * If it's a different track, load it and start playing.
+     */
     fun playTrack(track: AudioTrack) {
         viewModelScope.launch {
             val audioUri = downloadRepository.getLocalFilePath(track.id) ?: track.audioUrl
 
-            // Fetch saved progress before setting up media
-            val savedProgress = tracksRepository.getProgress(track.id)
-            val startPosition = if (savedProgress != null && !savedProgress.finished) {
-                savedProgress.currentTime
-            } else {
-                0L
-            }
-
-            val mediaItem = MediaItem.Builder()
-                .setMediaId(track.id)
-                .setUri(audioUri)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(track.title)
-                        .setArtist("Thanissaro Bhikkhu")
-                        .build()
-                )
-                .build()
-
             mediaController?.let { controller ->
-                controller.setMediaItem(mediaItem, startPosition)
-                controller.prepare()
+                // Check if this track is already loaded in the media controller
+                val currentMediaId = controller.currentMediaItem?.mediaId
 
-                controller.play()
+                if (currentMediaId == track.id) {
+                    // Track is already loaded - just play/resume
+                    if (!controller.isPlaying) {
+                        controller.play()
+                    }
+                } else {
+                    // Different track - load and play it
+                    val savedProgress = tracksRepository.getProgress(track.id)
+                    val startPosition = if (savedProgress != null && !savedProgress.finished) {
+                        savedProgress.currentTime
+                    } else {
+                        0L
+                    }
+
+                    val mediaItem = MediaItem.Builder()
+                        .setMediaId(track.id)
+                        .setUri(audioUri)
+                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setTitle(track.title)
+                                .setArtist("Thanissaro Bhikkhu")
+                                .build()
+                        )
+                        .build()
+
+                    controller.setMediaItem(mediaItem, startPosition)
+                    controller.prepare()
+                    controller.play()
+                }
             }
 
             _currentTrackId.value = track.id
-            _uiState.value = _uiState.value.copy(currentTrack = track, albumArt = null)
+            _uiState.value = _uiState.value.copy(
+                currentTrack = track,
+                playingTrack = track,
+                albumArt = null
+            )
 
             // Extract album art in background
             val albumArt = albumArtExtractor.extractAlbumArt(audioUri)
@@ -143,7 +214,18 @@ class PlayerViewModel @Inject constructor(
     }
 
     fun togglePlayPause() {
+        val currentTrack = _uiState.value.currentTrack
+
         mediaController?.let { controller ->
+            val loadedMediaId = controller.currentMediaItem?.mediaId
+
+            // If the viewed track is different from what's loaded, load and play it
+            if (currentTrack != null && loadedMediaId != currentTrack.id) {
+                playTrack(currentTrack)
+                return
+            }
+
+            // Same track - just toggle play/pause
             if (controller.isPlaying) {
                 controller.pause()
             } else {
@@ -157,9 +239,18 @@ class PlayerViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(currentPosition = position)
     }
 
+    /**
+     * Updates only the UI position without affecting the media controller.
+     * Use this when seeking on a track that's not loaded in the player.
+     */
+    fun updateViewedPosition(position: Long) {
+        _uiState.value = _uiState.value.copy(currentPosition = position)
+    }
+
     fun skipForward() {
         mediaController?.let { controller ->
-            val newPosition = (controller.currentPosition + 30_000).coerceAtMost(controller.duration)
+            val newPosition =
+                (controller.currentPosition + 30_000).coerceAtMost(controller.duration)
             controller.seekTo(newPosition)
         }
     }
@@ -178,6 +269,19 @@ class PlayerViewModel @Inject constructor(
                 duration = controller.duration.coerceAtLeast(0)
             )
         }
+    }
+
+    /**
+     * Stops playback, clears the current track, and resets the player state.
+     */
+    fun stopPlayback() {
+        mediaController?.let { controller ->
+            controller.stop()
+            controller.clearMediaItems()
+        }
+
+        _currentTrackId.value = null
+        _uiState.value = PlayerUiState(isConnected = _uiState.value.isConnected)
     }
 
     override fun onCleared() {
