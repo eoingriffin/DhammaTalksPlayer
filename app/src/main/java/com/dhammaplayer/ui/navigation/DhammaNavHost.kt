@@ -102,6 +102,11 @@ fun DhammaNavHost(
                 val isControlsEnabled =
                     (isViewingPlayingTrack || isNothingActivelyPlaying) && hasDuration
 
+                // Find previous and next tracks in the current list
+                val currentIndex = tracksUiState.tracks.indexOfFirst { it.id == track.id }
+                val hasPrevious = currentIndex > 0
+                val hasNext = currentIndex >= 0 && currentIndex < tracksUiState.tracks.size - 1
+
                 PlayerScreen(
                     track = track,
                     albumArt = playerUiState.albumArt,
@@ -134,7 +139,21 @@ fun DhammaNavHost(
                     },
                     onReset = {
                         playerViewModel.resetTrackProgress(track.id)
-                    }
+                    },
+                    onPrevious = {
+                        if (hasPrevious) {
+                            val previousTrack = tracksUiState.tracks[currentIndex - 1]
+                            playerViewModel.selectTrack(previousTrack)
+                        }
+                    },
+                    onNext = {
+                        if (hasNext) {
+                            val nextTrack = tracksUiState.tracks[currentIndex + 1]
+                            playerViewModel.selectTrack(nextTrack)
+                        }
+                    },
+                    hasPrevious = hasPrevious,
+                    hasNext = hasNext
                 )
             }
         }
