@@ -4,7 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -21,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.dhammaplayer.data.model.ThemeMode
 import com.dhammaplayer.ui.components.BottomNavBar
 import com.dhammaplayer.ui.components.BottomNavItem
 import com.dhammaplayer.ui.components.MiniPlayer
@@ -40,6 +47,8 @@ enum class AppScreen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DhammaNavHost(
+    themeMode: ThemeMode,
+    onThemeModeChange: () -> Unit,
     tracksViewModel: TracksViewModel = hiltViewModel(),
     playerViewModel: PlayerViewModel = hiltViewModel(),
     scheduleViewModel: ScheduleViewModel = hiltViewModel()
@@ -119,6 +128,23 @@ fun DhammaNavHost(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
+                        },
+                        actions = {
+                            IconButton(onClick = onThemeModeChange) {
+                                Icon(
+                                    imageVector = when (themeMode) {
+                                        ThemeMode.LIGHT -> Icons.Default.LightMode
+                                        ThemeMode.DARK -> Icons.Default.DarkMode
+                                        ThemeMode.AUTO -> Icons.Default.BrightnessAuto
+                                    },
+                                    contentDescription = when (themeMode) {
+                                        ThemeMode.LIGHT -> "Light mode (tap for dark)"
+                                        ThemeMode.DARK -> "Dark mode (tap for auto)"
+                                        ThemeMode.AUTO -> "Auto mode (tap for light)"
+                                    },
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
