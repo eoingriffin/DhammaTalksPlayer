@@ -236,7 +236,7 @@ class PlayerViewModelTest : BaseTest() {
         }
 
         @Test
-        fun `should toggle play/pause when togglePlayPause called`() {
+        fun `should toggle play and pause when togglePlayPause called`() {
             // TODO: Implement test
         }
 

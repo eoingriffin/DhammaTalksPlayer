@@ -77,7 +77,7 @@ class ScheduleViewModelTest : BaseTest() {
         }
 
         @Test
-        fun `should format time as HH:mm`() {
+        fun `should format time in 24hr format`() {
             // TODO: Implement test
         }
 
@@ -172,7 +172,7 @@ class ScheduleViewModelTest : BaseTest() {
         }
 
         @Test
-        fun `should handle enable/disable operation in coroutine scope`() {
+        fun `should handle enable and disable operation in coroutine scope`() {
             // TODO: Implement test
         }
     }

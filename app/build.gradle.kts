@@ -55,6 +55,12 @@ android {
             it.useJUnitPlatform()
         }
     }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildToolsVersion = "36.0.0"
 }
 
 dependencies {
@@ -101,14 +107,32 @@ dependencies {
     // DataStore
     implementation(libs.datastore.preferences)
 
-    // Unit Testing
-    testImplementation(libs.junit6.api)
-    testImplementation(libs.junit6.params)
-    testRuntimeOnly(libs.junit6.engine)
+    // ----------------------------
+    // Unit Testing (Jupiter / "JUnit 6")
+    // ----------------------------
+    // Align all JUnit Jupiter + JUnit Platform versions
+    testImplementation(platform(libs.junit.bom))
+
+    // API + params
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.jupiter.params)
+
+    // Engines + launcher (launcher is the critical fix for your error)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
+
+    // Mocking / Coroutines / Turbine
     testImplementation(libs.mockk)
-    testImplementation(libs.mockk.android)
+    testImplementation(libs.mockk.android) // ok for JVM tests if you rely on it; otherwise you can remove it
     testImplementation(libs.coroutines.test)
     testImplementation(libs.turbine)
-    testImplementation(libs.androidx.test.core)
-}
 
+    // AndroidX Test Core is sometimes useful even in local JVM tests
+    testImplementation(libs.androidx.test.core)
+
+    // ----------------------------
+    // Instrumented (device/emulator) tests (src/androidTest/...)
+    // ----------------------------
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.core)
+}
