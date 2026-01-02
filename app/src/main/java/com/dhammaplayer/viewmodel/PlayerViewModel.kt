@@ -295,10 +295,17 @@ class PlayerViewModel @Inject constructor(
 
     fun updatePosition() {
         mediaController?.let { controller ->
-            _uiState.value = _uiState.value.copy(
-                currentPosition = controller.currentPosition,
-                duration = controller.duration.coerceAtLeast(0)
-            )
+            // Only update position if the viewed track matches the playing track
+            // This prevents the playing track's position from overwriting a different viewed track's position
+            val currentlyViewedTrackId = _uiState.value.currentTrack?.id
+            val playingTrackId = controller.currentMediaItem?.mediaId
+
+            if (currentlyViewedTrackId == playingTrackId) {
+                _uiState.value = _uiState.value.copy(
+                    currentPosition = controller.currentPosition,
+                    duration = controller.duration.coerceAtLeast(0)
+                )
+            }
         }
     }
 
