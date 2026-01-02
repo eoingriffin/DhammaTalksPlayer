@@ -34,8 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhammaplayer.ui.theme.Indigo600
 import com.dhammaplayer.ui.theme.Slate200
-import com.dhammaplayer.ui.theme.Slate300
-import com.dhammaplayer.ui.theme.Slate500
 
 @Composable
 fun PlaybackControlsBar(
@@ -81,9 +79,9 @@ fun PlaybackControlsBar(
                         thumbColor = Indigo600,
                         activeTrackColor = Indigo600,
                         inactiveTrackColor = Slate200,
-                        disabledThumbColor = Slate200,
-                        disabledActiveTrackColor = Slate200,
-                        disabledInactiveTrackColor = Slate200
+                        disabledThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        disabledActiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        disabledInactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                     )
                 )
 
@@ -95,13 +93,21 @@ fun PlaybackControlsBar(
                         text = formatTime(currentPosition),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = if (isEnabled) Slate500 else Slate300
+                        color = if (isEnabled) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        }
                     )
                     Text(
                         text = formatTime(duration),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = if (isEnabled) Slate500 else Slate300
+                        color = if (isEnabled) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        }
                     )
                 }
             }
@@ -124,13 +130,21 @@ fun PlaybackControlsBar(
                         Icon(
                             imageVector = Icons.Default.FastRewind,
                             contentDescription = "Skip back 10 seconds",
-                            tint = if (isEnabled) Slate500 else Slate200,
+                            tint = if (isEnabled) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            },
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
                             text = "10",
                             fontSize = 8.sp,
-                            color = if (isEnabled) Slate500 else Slate200
+                            color = if (isEnabled) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            }
                         )
                     }
                 }
@@ -175,13 +189,21 @@ fun PlaybackControlsBar(
                         Icon(
                             imageVector = Icons.Default.FastForward,
                             contentDescription = "Skip forward 30 seconds",
-                            tint = if (isEnabled) Slate500 else Slate200,
+                            tint = if (isEnabled) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            },
                             modifier = Modifier.size(28.dp)
                         )
                         Text(
                             text = "30",
                             fontSize = 8.sp,
-                            color = if (isEnabled) Slate500 else Slate200
+                            color = if (isEnabled) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            }
                         )
                     }
                 }
