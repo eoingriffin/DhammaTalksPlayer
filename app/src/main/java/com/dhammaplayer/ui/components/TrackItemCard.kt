@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Battery6Bar
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -99,18 +98,22 @@ fun TrackItemCard(
                         .background(if (isActive) Indigo600 else Slate100),
                     contentAlignment = Alignment.Center
                 ) {
-                    val iconToShow = if (isActive || completion > 0f) {
-                        getBatteryIconForProgress(completion, isFinished)
+                    if (isActive || completion > 0f) {
+                        val iconToShow = getBatteryIconForProgress(completion, isFinished)
+                        Icon(
+                            imageVector = iconToShow,
+                            contentDescription = null,
+                            tint = if (isActive) MaterialTheme.colorScheme.onPrimary else Slate400,
+                            modifier = Modifier.size(24.dp)
+                        )
                     } else {
-                        Icons.Default.Diamond
+                        // Lotus emoji for tracks with no progress
+                        Text(
+                            text = "🪷",
+                            fontSize = 24.sp,
+                            modifier = Modifier
+                        )
                     }
-
-                    Icon(
-                        imageVector = iconToShow,
-                        contentDescription = null,
-                        tint = if (isActive) MaterialTheme.colorScheme.onPrimary else Slate400,
-                        modifier = Modifier.size(24.dp)
-                    )
 
                     if (isFinished) {
                         Box(
@@ -276,8 +279,7 @@ private fun getBatteryIconForProgress(
         completion >= 40f -> Icons.Default.Battery3Bar
         completion >= 25f -> Icons.Default.Battery2Bar
         completion >= 10f -> Icons.Default.Battery1Bar
-        completion > 0f -> Icons.Default.Battery0Bar
-        else -> Icons.Default.Diamond
+        else -> Icons.Default.Battery0Bar // completion > 0f
     }
 }
 
