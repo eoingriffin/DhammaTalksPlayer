@@ -13,12 +13,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Battery0Bar
+import androidx.compose.material.icons.filled.Battery1Bar
+import androidx.compose.material.icons.filled.Battery2Bar
+import androidx.compose.material.icons.filled.Battery3Bar
+import androidx.compose.material.icons.filled.Battery4Bar
+import androidx.compose.material.icons.filled.Battery5Bar
+import androidx.compose.material.icons.filled.Battery6Bar
+import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -91,8 +99,14 @@ fun TrackItemCard(
                         .background(if (isActive) Indigo600 else Slate100),
                     contentAlignment = Alignment.Center
                 ) {
+                    val iconToShow = if (isActive || completion > 0f) {
+                        getBatteryIconForProgress(completion, isFinished)
+                    } else {
+                        Icons.Default.Diamond
+                    }
+
                     Icon(
-                        imageVector = if (isActive) Icons.Default.PlayArrow else Icons.Default.Schedule,
+                        imageVector = iconToShow,
                         contentDescription = null,
                         tint = if (isActive) MaterialTheme.colorScheme.onPrimary else Slate400,
                         modifier = Modifier.size(24.dp)
@@ -102,7 +116,7 @@ fun TrackItemCard(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(end = 0.dp)
+                                .padding(end = 2.dp, top = 2.dp)
                                 .size(18.dp)
                                 .clip(CircleShape)
                                 .background(Green500),
@@ -244,8 +258,26 @@ private fun formatDate(dateString: String): String {
         val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
         val date = inputFormat.parse(dateString)
         date?.let { outputFormat.format(it) } ?: dateString
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         dateString.take(12)
+    }
+}
+
+@Composable
+private fun getBatteryIconForProgress(
+    completion: Float,
+    isFinished: Boolean
+): androidx.compose.ui.graphics.vector.ImageVector {
+    return when {
+        isFinished -> Icons.Default.BatteryFull
+        completion >= 85f -> Icons.Default.Battery6Bar
+        completion >= 70f -> Icons.Default.Battery5Bar
+        completion >= 55f -> Icons.Default.Battery4Bar
+        completion >= 40f -> Icons.Default.Battery3Bar
+        completion >= 25f -> Icons.Default.Battery2Bar
+        completion >= 10f -> Icons.Default.Battery1Bar
+        completion > 0f -> Icons.Default.Battery0Bar
+        else -> Icons.Default.Diamond
     }
 }
 
