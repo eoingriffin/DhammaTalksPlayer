@@ -218,7 +218,8 @@ class PlaybackService : MediaSessionService() {
         if (trackId.isNotEmpty() && player.duration > 0) {
             val currentTime = player.currentPosition
             val duration = player.duration
-            val isFinished = (currentTime.toFloat() / duration) >= 0.95f
+            val timeRemaining = duration - currentTime
+            val isFinished = timeRemaining <= 15_000L // 15 seconds or less remaining
 
             serviceScope.launch(Dispatchers.IO) {
                 tracksRepository.saveProgress(
