@@ -9,6 +9,8 @@ import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,8 +58,12 @@ class RssService @Inject constructor(
         while (eventType != XmlPullParser.END_DOCUMENT) {
             when (eventType) {
                 XmlPullParser.START_TAG -> {
-                    currentTag = parser.name
-                    when (currentTag) {
+                    // For namespace-aware parsing, combine prefix and name
+                    val prefix = parser.prefix
+                    val name = parser.name
+                    currentTag = if (prefix != null) "$prefix:$name" else name
+
+                    when (name) {
                         "item" -> currentTrack = mutableMapOf()
                         "enclosure" -> {
                             currentTrack?.let { track ->
@@ -79,6 +85,7 @@ class RssService @Inject constructor(
                             "pubDate" -> currentTrack["pubDate"] = text
                             "description" -> currentTrack["description"] = stripHtml(text)
                             "guid" -> currentTrack["guid"] = text
+                            "itunes:duration", "duration" -> currentTrack["duration"] = text
                         }
                     }
                 }
@@ -88,14 +95,33 @@ class RssService @Inject constructor(
                         val audioUrl = currentTrack["audioUrl"] ?: ""
                         if (audioUrl.isNotEmpty()) {
                             val id = currentTrack["guid"]?.trim() ?: audioUrl
+                            val pubDateString = currentTrack["pubDate"] ?: ""
+
+                            // Parse pubDate to timestamp for proper sorting
+                            val pubDateTimestamp = try {
+                                ZonedDateTime.parse(
+                                    pubDateString,
+                                    DateTimeFormatter.RFC_1123_DATE_TIME
+                                )
+                                    .toInstant()
+                                    .toEpochMilli()
+                            } catch (e: Exception) {
+                                0L // Default timestamp for invalid dates
+                            }
+
+                            // Parse itunes:duration to milliseconds
+                            val durationMillis = parseDuration(currentTrack["duration"])
+
                             tracks.add(
                                 AudioTrack(
                                     id = id,
                                     title = currentTrack["title"] ?: "Untitled Talk",
                                     link = currentTrack["link"] ?: "",
-                                    pubDate = currentTrack["pubDate"] ?: "",
+                                    pubDate = pubDateString,
+                                    pubDateTimestamp = pubDateTimestamp,
                                     audioUrl = audioUrl,
                                     description = currentTrack["description"] ?: "",
+                                    duration = durationMillis,
                                     source = source.name
                                 )
                             )
@@ -108,11 +134,28 @@ class RssService @Inject constructor(
             eventType = parser.next()
         }
 
+        // Sort by pubDateTimestamp in descending order (newest first)
+        tracks.sortByDescending { it.pubDateTimestamp }
         return tracks
     }
 
     private fun stripHtml(text: String): String {
         return text.replace(Regex("<[^>]*>"), "")
+    }
+
+    /**
+     * Parses iTunes duration format to milliseconds.
+     * The itunes:duration field is in seconds (as a plain number), not HH:MM:SS format.
+     */
+    private fun parseDuration(durationString: String?): Long? {
+        if (durationString.isNullOrEmpty()) return null
+
+        return try {
+            // iTunes duration is in seconds, convert to milliseconds
+            durationString.toLong() * 1000
+        } catch (e: Exception) {
+            null
+        }
     }
 }
 

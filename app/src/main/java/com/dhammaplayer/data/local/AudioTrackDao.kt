@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface AudioTrackDao {
 
-    @Query("SELECT * FROM audio_tracks ORDER BY pubDate DESC")
+    @Query("SELECT * FROM audio_tracks ORDER BY pubDateTimestamp DESC")
     fun getAllTracks(): Flow<List<AudioTrack>>
 
-    @Query("SELECT * FROM audio_tracks WHERE source = :source ORDER BY pubDate DESC")
+    @Query("SELECT * FROM audio_tracks WHERE source = :source ORDER BY pubDateTimestamp DESC")
     fun getTracksBySource(source: String): Flow<List<AudioTrack>>
 
     @Query("SELECT * FROM audio_tracks WHERE id = :id")

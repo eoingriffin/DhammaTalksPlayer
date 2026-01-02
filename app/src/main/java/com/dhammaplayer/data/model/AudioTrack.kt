@@ -13,6 +13,7 @@ data class AudioTrack(
     val title: String,
     val link: String,
     val pubDate: String,
+    val pubDateTimestamp: Long = 0L, // Timestamp for proper sorting
     val audioUrl: String,
     val description: String,
     val duration: Long? = null,

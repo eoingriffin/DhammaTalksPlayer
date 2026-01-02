@@ -33,7 +33,8 @@ data class PlayerUiState(
     val currentPosition: Long = 0L,
     val duration: Long = 0L,
     val isConnected: Boolean = false,
-    val albumArt: Bitmap? = null
+    val albumArt: Bitmap? = null,
+    val hasManuallySeekd: Boolean = false      // True if user moved slider on non-playing track
 )
 
 @HiltViewModel
@@ -126,7 +127,8 @@ class PlayerViewModel @Inject constructor(
                 // Update currentTrack to match playingTrack and sync position from player
                 _uiState.value = _uiState.value.copy(
                     currentTrack = track,
-                    albumArt = null
+                    albumArt = null,
+                    hasManuallySeekd = false
                 )
                 // Sync position from the media controller
                 mediaController?.let { controller ->
@@ -146,13 +148,15 @@ class PlayerViewModel @Inject constructor(
                 } else {
                     0L
                 }
-                val savedDuration = savedProgress?.duration ?: 0L
+                // Use saved duration, or track's duration from RSS feed, or 0
+                val savedDuration = savedProgress?.duration ?: track.duration ?: 0L
 
                 _uiState.value = _uiState.value.copy(
                     currentTrack = track,
                     albumArt = null,
                     currentPosition = savedPosition,
-                    duration = savedDuration
+                    duration = savedDuration,
+                    hasManuallySeekd = false
                 )
 
                 // Only extract album art from local files to avoid network traffic
@@ -184,11 +188,19 @@ class PlayerViewModel @Inject constructor(
                     }
                 } else {
                     // Different track - load and play it
-                    val savedProgress = tracksRepository.getProgress(track.id)
-                    val startPosition = if (savedProgress != null && !savedProgress.finished) {
-                        savedProgress.currentTime
-                    } else {
-                        0L
+                    // Use the current UI position only if user manually seeked, otherwise use saved progress
+                    val startPosition =
+                        if (_uiState.value.currentTrack?.id == track.id && _uiState.value.hasManuallySeekd) {
+                            // User moved the slider on this track - respect their position
+                            _uiState.value.currentPosition
+                        } else {
+                            // Load from saved progress
+                            val savedProgress = tracksRepository.getProgress(track.id)
+                            if (savedProgress != null && !savedProgress.finished) {
+                                savedProgress.currentTime
+                            } else {
+                                0L
+                            }
                     }
 
                     val mediaItem = MediaItem.Builder()
@@ -219,7 +231,8 @@ class PlayerViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 currentTrack = track,
                 playingTrack = track,
-                albumArt = null
+                albumArt = null,
+                hasManuallySeekd = false  // Reset after starting playback
             )
 
             // Extract album art - allowed for playing track (audio is already streaming)
@@ -259,7 +272,10 @@ class PlayerViewModel @Inject constructor(
      * Use this when seeking on a track that's not loaded in the player.
      */
     fun updateViewedPosition(position: Long) {
-        _uiState.value = _uiState.value.copy(currentPosition = position)
+        _uiState.value = _uiState.value.copy(
+            currentPosition = position,
+            hasManuallySeekd = true  // Mark that user manually moved the slider
+        )
     }
 
     fun skipForward() {
@@ -305,12 +321,16 @@ class PlayerViewModel @Inject constructor(
      */
     fun resetTrackProgress(trackId: String) {
         viewModelScope.launch {
-            // Delete the progress entry to reset it
+            // Get the track to preserve its duration from RSS feed
+            val track = tracksRepository.getTrack(trackId)
+            val trackDuration = track?.duration ?: 0L
+
+            // Delete the progress entry to reset it, but preserve the duration
             tracksRepository.saveProgress(
                 TrackProgress(
                     trackId = trackId,
                     currentTime = 0L,
-                    duration = 0L,
+                    duration = trackDuration,
                     finished = false,
                     lastPlayed = System.currentTimeMillis()
                 )
@@ -328,7 +348,8 @@ class PlayerViewModel @Inject constructor(
             if (_uiState.value.currentTrack?.id == trackId) {
                 _uiState.value = _uiState.value.copy(
                     currentPosition = 0L,
-                    isPlaying = false
+                    isPlaying = false,
+                    duration = trackDuration  // Preserve the duration in UI
                 )
             }
         }
