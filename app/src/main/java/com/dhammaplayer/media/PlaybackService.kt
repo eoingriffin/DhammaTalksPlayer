@@ -132,7 +132,7 @@ class PlaybackService : MediaSessionService() {
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText("Thanissaro Bhikkhu")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(sessionActivityIntent)
             .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
             .setOngoing(true)

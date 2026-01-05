@@ -3,5 +3,6 @@
     <color name="indigo_600">#FF4F46E5</color>
     <color name="white">#FFFFFFFF</color>
     <color name="slate_50">#FFF8FAFC</color>
+    <color name="ic_launcher_background">#FFFFFFFF</color>
 </resources>
 
